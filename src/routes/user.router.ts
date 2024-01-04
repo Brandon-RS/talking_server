@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
+
 import { createUser } from '../controllers/user.controller';
 import validateFields from '../middlewares/validate_fields';
 
