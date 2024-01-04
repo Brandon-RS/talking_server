@@ -4,12 +4,31 @@ import usersSchema from '../models/users.schema';
 const User = usersSchema;
 
 export const createUser = async (req: Request, res: Response) => {
-  const user = new User(req.body);
+  const { name, email, password } = req.body;
 
-  await user.save();
+  try {
+    const existsEmail = await User.findOne({ email });
 
-  res.json({
-    success: true,
-    user,
-  });
+    if (existsEmail) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Email already exists',
+      });
+    }
+
+    const user = new User(req.body);
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error creating user',
+    });
+  }
 };
