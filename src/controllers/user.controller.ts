@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 
+import generateJWT from '../helpers/jwt';
 import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
@@ -27,9 +28,12 @@ export const createUser = async (req: Request, res: Response) => {
 
     await user.save();
 
+    const token = await generateJWT(user.id);
+
     res.json({
       success: true,
       user,
+      token,
     });
   } catch (error: any) {
     console.log(`❌ ${error}`);
