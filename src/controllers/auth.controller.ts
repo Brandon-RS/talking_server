@@ -46,3 +46,32 @@ export const authUser = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const renewToken = async (req: Request, res: Response) => {
+  const { uid } = req.body;
+
+  try {
+    if (!uid) {
+      return res.status(400).json({
+        success: false,
+        msg: 'No user id',
+      });
+    }
+
+    const token = await generateJWT(uid);
+
+    const user = await User.findById(uid);
+
+    res.json({
+      success: true,
+      user,
+      token,
+    });
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error renewing token',
+    });
+  }
+};
