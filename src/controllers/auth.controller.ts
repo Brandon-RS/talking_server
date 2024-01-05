@@ -6,28 +6,31 @@ import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
 
-export const createUser = async (req: Request, res: Response) => {
+export const authUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const existsEmail = await User.findOne({ email });
+    // Validate email
+    const user = await User.findOne({ email });
 
-    // Check if email exists
-    if (existsEmail) {
+    if (!user) {
       return res.status(400).json({
         success: false,
-        msg: 'Email already exists',
+        msg: 'Email or Password is not correct',
       });
     }
 
-    const user = new User(req.body);
+    // Validate password
+    const validPassword = bcrypt.compareSync(password, user.password);
 
-    // Encrypt password
-    const salt = bcrypt.genSaltSync();
-    user.password = bcrypt.hashSync(password, salt);
+    if (!validPassword) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Email or Password is not correct',
+      });
+    }
 
-    await user.save();
-
+    // Generate JWT
     const token = await generateJWT(user.id);
 
     res.json({
@@ -39,7 +42,7 @@ export const createUser = async (req: Request, res: Response) => {
     console.log(`❌ ${error}`);
     res.status(500).json({
       success: false,
-      msg: 'Error creating user',
+      msg: 'Error authenticating user',
     });
   }
 };

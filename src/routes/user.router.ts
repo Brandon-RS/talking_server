@@ -7,7 +7,7 @@ import validateFields from '../middlewares/validate_fields';
 const userRouter = Router();
 
 userRouter.post(
-  '/new',
+  '/users',
   [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Email is required').not().isEmpty(),
