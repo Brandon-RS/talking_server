@@ -8,6 +8,7 @@ import dbConnection from './database/config';
 import router from './routes/app.router';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';
+import socketController from './sockets/socket';
 
 dotenv.config();
 const port = process.env.PORT;
@@ -24,8 +25,8 @@ app.use('/api', authRouter);
 app.use('/api', userRouter);
 
 const server = http.createServer(app);
-export const io = new Server(server);
-// TODO(BRANDOM): Add socket.io implementation
+const io = new Server(server);
+socketController(io);
 
 server.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
