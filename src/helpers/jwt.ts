@@ -21,9 +21,10 @@ export const verifyJWT = (token: string) => {
     throw new Error('No secret JWT seed');
   }
 
-  return new Promise((resolve, reject) => {
-    verify(token, secret, (err, decoded) => {
-      err ? reject('Could not verify token') : resolve(decoded);
-    });
-  });
+  try {
+    const { uid } = verify(token, secret) as any;
+    return [true, uid];
+  } catch (error: any) {
+    return [false, null];
+  }
 };

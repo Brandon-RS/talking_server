@@ -1,13 +1,22 @@
 import { Server, Socket } from 'socket.io';
+import { connectUser, disconnectUser } from '../controllers/socket.controller';
+import { verifyJWT } from '../helpers/jwt';
 
 const socketController = (io: Server) => {
   const nsp = io.of('/api/chats');
 
   nsp.on('connection', (client: Socket) => {
-    console.log(`❌ ${client.id} connected`);
+    const jwt = client.handshake.headers['x-token'];
+    const [valid, uid] = verifyJWT(jwt as string);
+
+    if (!valid) {
+      return client.disconnect();
+    }
+
+    connectUser(uid as string);
 
     client.on('disconnect', () => {
-      console.log(`❌ ${client.id} disconnected`);
+      disconnectUser(uid as string);
     });
 
     client.on('send-message', (obj) => {
