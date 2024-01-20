@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
 
-import { createUser } from '../controllers/user.controller';
+import { createUser, getALlUsers } from '../controllers/user.controller';
 import validateFields from '../middlewares/validate_fields';
+import validateJWT from '../middlewares/validate_jwt';
 
 const userRouter = Router();
 
@@ -19,5 +20,7 @@ userRouter.post(
   ],
   createUser
 );
+
+userRouter.get('/users', validateJWT, getALlUsers);
 
 export default userRouter;

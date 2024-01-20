@@ -31,7 +31,6 @@ export const createUser = async (req: Request, res: Response) => {
     const token = await generateJWT(user.id);
 
     res.json({
-      success: true,
       user,
       token,
     });
@@ -40,6 +39,25 @@ export const createUser = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       msg: 'Error creating user',
+    });
+  }
+};
+
+export const getALlUsers = async (req: Request, res: Response) => {
+  const { limit = 10, from = 0 } = req.query;
+
+  try {
+    const users = await User.find({ _id: { $ne: req.body.uid } })
+      .sort({ online: -1 })
+      .skip(Number(from))
+      .limit(Number(limit));
+
+    res.json(users);
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error getting users',
     });
   }
 };
