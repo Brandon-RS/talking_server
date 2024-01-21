@@ -14,7 +14,7 @@ export const generateJWT = (uid: String) => {
   });
 };
 
-export const verifyJWT = (token: string) => {
+export const verifyJWT = (token: string): [boolean, string | null] => {
   const secret = process.env.SECRET_JWT_SEED;
 
   if (!secret) {

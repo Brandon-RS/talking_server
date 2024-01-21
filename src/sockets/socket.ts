@@ -9,14 +9,23 @@ const socketController = (io: Server) => {
     const jwt = client.handshake.headers['x-token'];
     const [valid, uid] = verifyJWT(jwt as string);
 
-    if (!valid) {
+    if (!valid || !uid) {
       return client.disconnect();
     }
 
-    connectUser(uid as string);
+    connectUser(uid);
+
+    client.join(uid);
+
+    client.on(
+      'personal-message',
+      async (payload: { from: string; to: string; text: string }) => {
+        await nsp.to(payload.to).emit('personal-message', payload);
+      }
+    );
 
     client.on('disconnect', () => {
-      disconnectUser(uid as string);
+      disconnectUser(uid);
     });
 
     client.on('send-message', (obj) => {
