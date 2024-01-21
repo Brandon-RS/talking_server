@@ -1,6 +1,13 @@
 import { Server, Socket } from 'socket.io';
-import { connectUser, disconnectUser } from '../controllers/socket.controller';
+
 import { verifyJWT } from '../helpers/jwt';
+import { IMessage } from '../models/message.schema';
+
+import {
+  connectUser,
+  disconnectUser,
+  saveMessage,
+} from '../controllers/socket.controller';
 
 const socketController = (io: Server) => {
   const nsp = io.of('/api/chats');
@@ -17,12 +24,10 @@ const socketController = (io: Server) => {
 
     client.join(uid);
 
-    client.on(
-      'personal-message',
-      async (payload: { from: string; to: string; text: string }) => {
-        await nsp.to(payload.to).emit('personal-message', payload);
-      }
-    );
+    client.on('personal-message', async (payload: IMessage) => {
+      await saveMessage(payload);
+      nsp.to(payload.to.toString()).emit('personal-message', payload);
+    });
 
     client.on('disconnect', () => {
       disconnectUser(uid);
