@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
 
-import { createUser, getALlUsers } from '../controllers/user.controller';
 import validateFields from '../middlewares/validate_fields';
 import validateJWT from '../middlewares/validate_jwt';
+
+import {
+  createUser,
+  getALlUsers,
+  getUserChats,
+} from '../controllers/user.controller';
 
 const userRouter = Router();
 
@@ -22,5 +27,7 @@ userRouter.post(
 );
 
 userRouter.get('/users', validateJWT, getALlUsers);
+
+userRouter.get('/users/chats/:to', validateJWT, getUserChats);
 
 export default userRouter;

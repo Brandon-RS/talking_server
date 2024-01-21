@@ -2,9 +2,11 @@ import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 
 import { generateJWT } from '../helpers/jwt';
+import messageSchema from '../models/message.schema';
 import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
+const Message = messageSchema;
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -58,6 +60,30 @@ export const getALlUsers = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       msg: 'Error getting users',
+    });
+  }
+};
+
+export const getUserChats = async (req: Request, res: Response) => {
+  const from = req.body.uid;
+  const to = req.params.to;
+
+  try {
+    const messages = await Message.find({
+      $or: [
+        { from, to },
+        { from: to, to: from },
+      ],
+    })
+      .sort({ createdAt: 'desc' })
+      .limit(30);
+
+    res.json(messages);
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error getting messages',
     });
   }
 };
