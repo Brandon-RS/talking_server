@@ -4,6 +4,7 @@ export interface IMessage {
   from: Types.ObjectId;
   to: Types.ObjectId;
   text: string;
+  createdAt: Date;
 }
 
 const MessageSchema = new Schema<IMessage>(
@@ -23,6 +24,12 @@ const MessageSchema = new Schema<IMessage>(
     text: {
       type: String,
       required: true,
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      index: { expires: '6h' },
     },
   },
   {
