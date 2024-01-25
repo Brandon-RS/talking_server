@@ -64,6 +64,55 @@ export const getALlUsers = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUser = async (req: Request, res: Response) => {
+  const requestOwner = req.body.uid;
+  const uid = req.params.id;
+
+  try {
+    if (requestOwner !== uid) {
+      return res.status(400).json({
+        success: false,
+        msg: "You can't update this account",
+      });
+    }
+
+    const { name, email } = req.body;
+
+    const emailExists = await User.findOne({
+      email: req.body.email,
+      _id: { $ne: uid },
+    });
+
+    if (emailExists) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Email already in use',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      uid,
+      { name, email },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: 'User not found',
+      });
+    }
+
+    res.json(user);
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error updating user',
+    });
+  }
+};
+
 export const getUserChats = async (req: Request, res: Response) => {
   const from = req.body.uid;
   const to = req.params.to;

@@ -9,6 +9,7 @@ import {
   deleteUser,
   getALlUsers,
   getUserChats,
+  updateUser,
 } from '../controllers/user.controller';
 
 const userRouter = Router();
@@ -30,6 +31,12 @@ userRouter.post(
 userRouter.get('/users', validateJWT, getALlUsers);
 
 userRouter.get('/users/chats/:to', validateJWT, getUserChats);
+
+userRouter.put(
+  '/users/:id',
+  [validateJWT, check('id', 'id is required').not().isEmpty(), validateFields],
+  updateUser
+);
 
 userRouter.delete(
   '/users/:id',
