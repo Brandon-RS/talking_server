@@ -6,6 +6,7 @@ import validateJWT from '../middlewares/validate_jwt';
 
 import {
   createUser,
+  deleteUser,
   getALlUsers,
   getUserChats,
 } from '../controllers/user.controller';
@@ -29,5 +30,11 @@ userRouter.post(
 userRouter.get('/users', validateJWT, getALlUsers);
 
 userRouter.get('/users/chats/:to', validateJWT, getUserChats);
+
+userRouter.delete(
+  '/users/:id',
+  [validateJWT, check('id', 'id is required').not().isEmpty(), validateFields],
+  deleteUser
+);
 
 export default userRouter;

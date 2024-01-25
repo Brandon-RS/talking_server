@@ -87,3 +87,34 @@ export const getUserChats = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const requestOwner = req.body.uid;
+  const uid = req.params.id;
+
+  try {
+    if (requestOwner !== uid) {
+      return res.status(400).json({
+        success: false,
+        msg: "You can't delete this account",
+      });
+    }
+
+    const user = await User.findByIdAndDelete(uid);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: 'User not found',
+      });
+    }
+
+    res.json(user);
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error deleting user',
+    });
+  }
+};
