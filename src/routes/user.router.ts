@@ -49,6 +49,12 @@ userRouter.put(
   '/users/:id/change-password',
   [
     validateJWT,
+    check(
+      'current_password',
+      'Password must be at least 6 characters'
+    ).isLength({
+      min: 6,
+    }),
     check('password', 'Password must be at least 6 characters').isLength({
       min: 6,
     }),

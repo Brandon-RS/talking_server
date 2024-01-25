@@ -171,7 +171,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const changePassword = async (req: Request, res: Response) => {
   const requestOwner = req.body.uid;
   const uid = req.params.id;
-  const { password } = req.body;
+  const { current_password, password } = req.body;
 
   try {
     if (requestOwner !== uid) {
@@ -187,6 +187,16 @@ export const changePassword = async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         msg: 'User not found',
+      });
+    }
+
+    // Check current password
+    const validPassword = bcrypt.compareSync(current_password, user.password);
+
+    if (!validPassword) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Current password is incorrect',
       });
     }
 
