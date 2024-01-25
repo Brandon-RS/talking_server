@@ -5,6 +5,7 @@ import validateFields from '../middlewares/validate_fields';
 import validateJWT from '../middlewares/validate_jwt';
 
 import {
+  changePassword,
   createUser,
   deleteUser,
   getALlUsers,
@@ -42,6 +43,18 @@ userRouter.delete(
   '/users/:id',
   [validateJWT, check('id', 'id is required').not().isEmpty(), validateFields],
   deleteUser
+);
+
+userRouter.put(
+  '/users/:id/change-password',
+  [
+    validateJWT,
+    check('password', 'Password must be at least 6 characters').isLength({
+      min: 6,
+    }),
+    validateFields,
+  ],
+  changePassword
 );
 
 export default userRouter;
