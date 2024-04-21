@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import multer from 'multer';
 
 export const initCloudinary = () => {
   cloudinary.config({
@@ -8,5 +9,7 @@ export const initCloudinary = () => {
     secure: true,
   });
 };
+
+export const upload = multer({ dest: 'uploads/' });
 
 export default cloudinary;

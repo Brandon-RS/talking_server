@@ -14,6 +14,8 @@ import {
   updateUser,
 } from '../controllers/user.controller';
 
+import { upload } from '../helpers/cloudinary.helper';
+
 const userRouter = Router();
 
 userRouter.post(
@@ -66,6 +68,7 @@ userRouter.put(
 
 userRouter.put(
   '/users/:id/change-profile-pic',
+  upload.single('image'),
   [validateJWT, validateFields],
   changeProfilePic
 );

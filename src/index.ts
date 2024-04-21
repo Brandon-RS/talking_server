@@ -4,8 +4,8 @@ import http from 'http';
 import path from 'path';
 import { Server } from 'socket.io';
 
-import { initCloudinary } from './database/cloudinary.configs';
 import dbConnection from './database/config';
+import { initCloudinary } from './helpers/cloudinary.helper';
 import router from './routes/app.router';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';

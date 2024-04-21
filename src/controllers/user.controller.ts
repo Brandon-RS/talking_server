@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 
-import cloudinary from '../database/cloudinary.configs';
+import cloudinary from '../helpers/cloudinary.helper';
 import { generateJWT } from '../helpers/jwt';
 import messageSchema from '../models/message.schema';
 import usersSchema from '../models/users.schema';
@@ -238,8 +238,12 @@ export const changeProfilePic = async (req: Request, res: Response) => {
       });
     }
 
-    await cloudinary.uploader.upload(
-      req.body.image,
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    cloudinary.uploader.upload(
+      req.file.path,
       {
         upload_preset: 'profile-pics',
         public_id: user.id,
@@ -250,20 +254,18 @@ export const changeProfilePic = async (req: Request, res: Response) => {
           console.log(`❌ ${error}`);
           return res.status(500).json({
             success: false,
-            msg: 'Error uploading image',
+            error,
           });
         }
 
-        if (result != null) {
-          return res.status(500).json({
+        if (result) {
+          return res.json({
             success: true,
             result,
           });
         }
       }
     );
-
-    res.json({});
   } catch (error: any) {
     console.log(`❌ ${error}`);
     res.status(500).json({
