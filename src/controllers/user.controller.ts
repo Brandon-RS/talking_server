@@ -248,10 +248,10 @@ export const changeProfilePic = async (req: Request, res: Response) => {
         upload_preset: 'profile-pics',
         public_id: user.id,
         resource_type: 'image',
+        type: 'authenticated',
       },
-      (error, result) => {
+      async (error, result) => {
         if (error) {
-          console.log(`❌ ${error}`);
           return res.status(500).json({
             success: false,
             error,
@@ -259,8 +259,12 @@ export const changeProfilePic = async (req: Request, res: Response) => {
         }
 
         if (result) {
+          user.profileImage = result.secure_url;
+          await user.save();
+
           return res.json({
             success: true,
+            user,
             result,
           });
         }

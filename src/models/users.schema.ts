@@ -22,6 +22,11 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+
+  profileImage: {
+    type: String,
+    unique: true,
+  },
 });
 
 UserSchema.methods.toJSON = function () {
