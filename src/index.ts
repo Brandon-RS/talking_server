@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'path';
 import { Server } from 'socket.io';
 
+import { initCloudinary } from './database/cloudinary.configs';
 import dbConnection from './database/config';
 import router from './routes/app.router';
 import authRouter from './routes/auth.router';
@@ -18,6 +19,8 @@ dbConnection();
 const app = express();
 app.use(express.static(publicPath));
 app.use(express.json());
+
+initCloudinary();
 
 // Routes
 app.use('/api', router);

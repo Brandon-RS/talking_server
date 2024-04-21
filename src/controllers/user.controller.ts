@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 
+import cloudinary from '../database/cloudinary.configs';
 import { generateJWT } from '../helpers/jwt';
 import messageSchema from '../models/message.schema';
 import usersSchema from '../models/users.schema';
@@ -212,6 +213,62 @@ export const changePassword = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       msg: 'Error changing password',
+    });
+  }
+};
+
+export const changeProfilePic = async (req: Request, res: Response) => {
+  const requestOwner = req.body.uid;
+  const uid = req.params.id;
+
+  try {
+    if (requestOwner !== uid) {
+      return res.status(400).json({
+        success: false,
+        msg: "You can't change this user`s profile picture",
+      });
+    }
+
+    const user = await User.findById(uid);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: 'User not found',
+      });
+    }
+
+    await cloudinary.uploader.upload(
+      req.body.image,
+      {
+        upload_preset: 'profile-pics',
+        public_id: user.id,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) {
+          console.log(`❌ ${error}`);
+          return res.status(500).json({
+            success: false,
+            msg: 'Error uploading image',
+          });
+        }
+
+        if (result != null) {
+          return res.status(500).json({
+            success: true,
+            result,
+          });
+        }
+      }
+    );
+
+    res.json({});
+  } catch (error: any) {
+    console.log(`❌ ${error}`);
+    res.status(500).json({
+      success: false,
+      msg: 'Error changing profile picture',
     });
   }
 };

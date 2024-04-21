@@ -6,6 +6,7 @@ import validateJWT from '../middlewares/validate_jwt';
 
 import {
   changePassword,
+  changeProfilePic,
   createUser,
   deleteUser,
   getALlUsers,
@@ -61,6 +62,12 @@ userRouter.put(
     validateFields,
   ],
   changePassword
+);
+
+userRouter.put(
+  '/users/:id/change-profile-pic',
+  [validateJWT, validateFields],
+  changeProfilePic
 );
 
 export default userRouter;
