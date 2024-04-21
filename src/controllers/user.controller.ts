@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
+import fs from 'fs';
 
 import cloudinary from '../helpers/cloudinary.helper';
 import { generateJWT } from '../helpers/jwt';
@@ -251,6 +252,8 @@ export const changeProfilePic = async (req: Request, res: Response) => {
         type: 'authenticated',
       },
       async (error, result) => {
+        fs.unlinkSync(req.file!.path ?? '');
+
         if (error) {
           return res.status(500).json({
             success: false,
