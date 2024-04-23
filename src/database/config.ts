@@ -1,4 +1,5 @@
 import mongoose, { ConnectOptions } from 'mongoose';
+import logger from '../helpers/logger.helper';
 
 const dbConnection = async () => {
   try {
@@ -11,13 +12,13 @@ const dbConnection = async () => {
     await mongoose
       .connect(mongUri, options)
       .then(() => {
-        console.log('✅ Database connected');
+        logger.info('✅ The database is connected');
       })
       .catch((err) => {
-        console.log(`❌ ${err}`);
+        logger.error(`❌ ${err}`);
       });
   } catch (error) {
-    console.log(`❌ ${error}`);
+    logger.error(`❌ ${error}`);
 
     throw new Error('❌ Error connecting to the database');
   }

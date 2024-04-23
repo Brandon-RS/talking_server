@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 
 import dbConnection from './database/config';
 import { initCloudinary } from './helpers/cloudinary.helper';
+import logger from './helpers/logger.helper';
 import router from './routes/app.router';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';
@@ -32,5 +33,5 @@ const io = new Server(server);
 socketController(io);
 
 server.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+  logger.info(`Server is running at http://localhost:${port}`);
 });

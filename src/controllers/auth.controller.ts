@@ -2,12 +2,15 @@ import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 
 import { generateJWT } from '../helpers/jwt';
+import logger from '../helpers/logger.helper';
 import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
 
 export const authUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+
+  logger.info(`POST: api/auth - ${email}`);
 
   try {
     // Validate email
@@ -39,7 +42,8 @@ export const authUser = async (req: Request, res: Response) => {
       token,
     });
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`POST: api/auth - ${email} - ${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error authenticating user',
@@ -68,7 +72,8 @@ export const renewToken = async (req: Request, res: Response) => {
       token,
     });
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`GET: api/renew-token - ${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error renewing token',
