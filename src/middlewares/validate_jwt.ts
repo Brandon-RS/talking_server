@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload, verify } from 'jsonwebtoken';
+import logger from '../helpers/logger.helper';
 
 const validateJWT = (req: Request, res: Response, next: NextFunction) => {
   const token = req.header('x-token');
@@ -7,7 +8,8 @@ const validateJWT = (req: Request, res: Response, next: NextFunction) => {
   const secret = process.env.SECRET_JWT_SEED;
 
   if (!secret) {
-    console.log('❌ No secret found');
+    logger.error('No secret found');
+
     return res.status(500).json({
       success: false,
       msg: 'Internal server error',
@@ -27,7 +29,8 @@ const validateJWT = (req: Request, res: Response, next: NextFunction) => {
     req.body.uid = uid;
     next();
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(401).json({
       success: false,
       msg: 'Invalid token',

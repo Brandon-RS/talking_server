@@ -54,6 +54,8 @@ export const authUser = async (req: Request, res: Response) => {
 export const renewToken = async (req: Request, res: Response) => {
   const { uid } = req.body;
 
+  logger.info(`GET: api/renew-token - ${uid}`);
+
   try {
     if (!uid) {
       return res.status(400).json({

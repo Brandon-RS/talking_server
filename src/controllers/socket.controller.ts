@@ -1,3 +1,4 @@
+import logger from '../helpers/logger.helper';
 import messageSchema, { IMessage } from '../models/message.schema';
 import usersSchema from '../models/users.schema';
 
@@ -10,7 +11,8 @@ export const connectUser = async (uid: String) => {
   if (!user) {
     throw new Error(`User with id ${uid} not found`);
   }
-  console.log(`✅ ${user.id} connected`);
+
+  logger.info(`${user.id} connected`);
 
   user.online = true;
   await user.save();
@@ -23,8 +25,7 @@ export const saveMessage = async (payload: IMessage): Promise<Boolean> => {
     await message.save();
     return true;
   } catch (error) {
-    console.log(`❌ Error saving message: ${payload}: ${error}`);
-
+    logger.error(`Error saving message: ${payload}: ${error}`);
     return false;
   }
 };
@@ -35,7 +36,8 @@ export const disconnectUser = async (uid: String) => {
   if (!user) {
     throw new Error(`User with id ${uid} not found`);
   }
-  console.log(`❌ ${user.id} disconnected`);
+
+  logger.info(`${user.id} disconnected`);
 
   user.online = false;
   await user.save();

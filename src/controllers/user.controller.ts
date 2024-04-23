@@ -4,6 +4,7 @@ import fs from 'fs';
 
 import cloudinary from '../helpers/cloudinary.helper';
 import { generateJWT } from '../helpers/jwt';
+import logger from '../helpers/logger.helper';
 import messageSchema from '../models/message.schema';
 import usersSchema from '../models/users.schema';
 
@@ -12,6 +13,8 @@ const Message = messageSchema;
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+
+  logger.info('POST: api/users');
 
   try {
     const existsEmail = await User.findOne({ email });
@@ -39,7 +42,8 @@ export const createUser = async (req: Request, res: Response) => {
       token,
     });
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error creating user',
@@ -50,6 +54,8 @@ export const createUser = async (req: Request, res: Response) => {
 export const getALlUsers = async (req: Request, res: Response) => {
   const { limit = 10, from = 0 } = req.query;
 
+  logger.info('GET: api/users');
+
   try {
     const users = await User.find({ _id: { $ne: req.body.uid } })
       .sort({ online: -1 })
@@ -58,7 +64,8 @@ export const getALlUsers = async (req: Request, res: Response) => {
 
     res.json(users);
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error getting users',
@@ -69,6 +76,8 @@ export const getALlUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const requestOwner = req.body.uid;
   const uid = req.params.id;
+
+  logger.info(`PUT: api/users/${uid}`);
 
   try {
     if (requestOwner !== uid) {
@@ -107,7 +116,8 @@ export const updateUser = async (req: Request, res: Response) => {
 
     res.json(user);
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error updating user',
@@ -118,6 +128,8 @@ export const updateUser = async (req: Request, res: Response) => {
 export const getUserChats = async (req: Request, res: Response) => {
   const from = req.body.uid;
   const to = req.params.to;
+
+  logger.info(`GET: api/users/chats/`);
 
   try {
     const messages = await Message.find({
@@ -131,7 +143,8 @@ export const getUserChats = async (req: Request, res: Response) => {
 
     res.json(messages);
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error getting messages',
@@ -142,6 +155,8 @@ export const getUserChats = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   const requestOwner = req.body.uid;
   const uid = req.params.id;
+
+  logger.info(`DELETE: api/users/${uid}`);
 
   try {
     if (requestOwner !== uid) {
@@ -162,7 +177,8 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     res.json(user);
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error deleting user',
@@ -174,6 +190,8 @@ export const changePassword = async (req: Request, res: Response) => {
   const requestOwner = req.body.uid;
   const uid = req.params.id;
   const { current_password, password } = req.body;
+
+  logger.info(`PUT: api/users/${uid}/change-password`);
 
   try {
     if (requestOwner !== uid) {
@@ -210,7 +228,8 @@ export const changePassword = async (req: Request, res: Response) => {
 
     res.json(user);
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error changing password',
@@ -221,6 +240,8 @@ export const changePassword = async (req: Request, res: Response) => {
 export const changeProfilePic = async (req: Request, res: Response) => {
   const requestOwner = req.body.uid;
   const uid = req.params.id;
+
+  logger.info(`PUT: api/users/${uid}/change-profile-pic`);
 
   try {
     if (requestOwner !== uid) {
@@ -285,7 +306,8 @@ export const changeProfilePic = async (req: Request, res: Response) => {
       }
     );
   } catch (error: any) {
-    console.log(`❌ ${error}`);
+    logger.error(`${error}`);
+
     res.status(500).json({
       success: false,
       msg: 'Error changing profile picture',
