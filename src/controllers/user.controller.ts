@@ -243,11 +243,22 @@ export const changeProfilePic = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    if (user.profileImage) {
+      const publicId = user.profileImage.split('pics/').pop()?.split('.')[0];
+
+      if (publicId) {
+        cloudinary.uploader.destroy(`talking/profile-pics/${publicId}`, {
+          invalidate: true,
+          resource_type: 'image',
+          type: 'authenticated',
+        });
+      }
+    }
+
     cloudinary.uploader.upload(
       req.file.path,
       {
         upload_preset: 'profile-pics',
-        public_id: user.id,
         resource_type: 'image',
         type: 'authenticated',
       },
@@ -278,6 +289,7 @@ export const changeProfilePic = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       msg: 'Error changing profile picture',
+      error,
     });
   }
 };
