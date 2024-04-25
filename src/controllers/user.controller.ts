@@ -340,12 +340,10 @@ export const changeProfilePic = async (req: Request, res: Response) => {
 
 // TODO(BRANDOM): Add interface for user, and send only required users parameters
 const sendVerificationEmail = (user: any, res: Response) => {
-  // const url = `${process.env.CLIENT_URL}/verify-email/${token}`;
-
   logger.info(`Sending verification email to ${user._id}`);
 
   const uniqueString = uuidv4() + user._id;
-  const url = `http://localhost:3000/api/verify-email/${user._id}/${uniqueString}`;
+  const url = `${process.env.HOST_URL}/api/verify-email/${user._id}/${uniqueString}`;
 
   const mailOptions = {
     from: process.env.AUTH_EMAIL,
@@ -400,7 +398,8 @@ const sendVerificationEmail = (user: any, res: Response) => {
 
 export const verifyUser = async (req: Request, res: Response) => {
   const { userId, uniqueString } = req.params;
-  const url = 'https://talking.bbrs.dev/verified';
+  const webUrl = process.env.WEB_URL;
+  const url = `${webUrl}/verified`;
 
   logger.info(`GET: api/verify-email/${userId}/${uniqueString}`);
 
