@@ -55,13 +55,14 @@ export const createUser = async (req: Request, res: Response) => {
 
     await user.save();
 
-    // const token = await generateJWT(user.id);
     sendVerificationEmail(user, res);
 
-    res.json({
-      user,
-      // token,
-    });
+    // const token = await generateJWT(user.id);
+
+    // res.json({
+    //   user,
+    //   token,
+    // });
   } catch (error: any) {
     logger.error(`${error}`);
 
@@ -341,10 +342,10 @@ export const changeProfilePic = async (req: Request, res: Response) => {
 const sendVerificationEmail = (user: any, res: Response) => {
   // const url = `${process.env.CLIENT_URL}/verify-email/${token}`;
 
-  logger.info(`Sending verification email to ${user.uid}`);
+  logger.info(`Sending verification email to ${user._id}`);
 
-  const uniqueString = uuidv4() + user.uid;
-  const url = `http://localhost:3000/verify-email/${user.uid}/${uniqueString}`;
+  const uniqueString = uuidv4() + user._id;
+  const url = `http://localhost:3000/verify-email/${user._id}/${uniqueString}`;
 
   const mailOptions = {
     from: process.env.AUTH_EMAIL,
@@ -361,7 +362,7 @@ const sendVerificationEmail = (user: any, res: Response) => {
   const hash = bcrypt.hashSync(uniqueString, salt);
 
   const userVerification = new UserVerification({
-    userId: user.uid,
+    userId: user._id,
     uniqueString: hash,
     createdAt: new Date(),
     expiredAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
