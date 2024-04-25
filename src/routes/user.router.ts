@@ -12,7 +12,6 @@ import {
   getALlUsers,
   getUserChats,
   updateUser,
-  verifiedEmail,
   verifyUser,
 } from '../controllers/user.controller';
 
@@ -76,7 +75,5 @@ userRouter.put(
 );
 
 userRouter.get('/verify-email/:userId/:uniqueString', verifyUser);
-
-userRouter.get('/verified', verifiedEmail);
 
 export default userRouter;
