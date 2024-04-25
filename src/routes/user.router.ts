@@ -75,7 +75,7 @@ userRouter.put(
   changeProfilePic
 );
 
-userRouter.get('/verify-email/:id/:uniqueString', verifyUser);
+userRouter.get('/verify-email/:userId/:uniqueString', verifyUser);
 
 userRouter.get('/verified', verifiedEmail);
 

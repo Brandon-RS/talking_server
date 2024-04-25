@@ -345,7 +345,7 @@ const sendVerificationEmail = (user: any, res: Response) => {
   logger.info(`Sending verification email to ${user._id}`);
 
   const uniqueString = uuidv4() + user._id;
-  const url = `http://localhost:3000/verify-email/${user._id}/${uniqueString}`;
+  const url = `http://localhost:3000/api/verify-email/${user._id}/${uniqueString}`;
 
   const mailOptions = {
     from: process.env.AUTH_EMAIL,
@@ -365,7 +365,7 @@ const sendVerificationEmail = (user: any, res: Response) => {
     userId: user._id,
     uniqueString: hash,
     createdAt: new Date(),
-    expiredAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+    expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
   });
 
   userVerification
@@ -406,8 +406,9 @@ export const verifyUser = async (req: Request, res: Response) => {
   UserVerification.findOne({ userId })
     .then((verification) => {
       if (!verification) {
+        logger.error(`${verification}`);
         const message = 'Something went wrong verifying email';
-        res.redirect(`/verified/error=true?message=${message}`);
+        res.redirect(`api/verified/error=true?message=${message}`);
       }
 
       if (verification!.expiresAt < new Date()) {
@@ -418,20 +419,20 @@ export const verifyUser = async (req: Request, res: Response) => {
               .then((_) => {
                 const message =
                   'Verification link has expired. Please sign up again!';
-                res.redirect(`/verified/error=true?message=${message}`);
+                res.redirect(`api/verified/error=true?message=${message}`);
               })
               .catch((err) => {
                 logger.error(`${err}`);
 
                 const message = 'Error verifying email';
-                res.redirect(`/verified/error=true?message=${message}`);
+                res.redirect(`api/verified/error=true?message=${message}`);
               });
           })
           .catch((err) => {
             logger.error(`${err}`);
 
             const message = 'Verification link expired';
-            res.redirect(`/verified/error=true?message=${message}`);
+            res.redirect(`api/verified/error=true?message=${message}`);
           });
       } else {
         const valid = bcrypt.compareSync(
@@ -441,27 +442,27 @@ export const verifyUser = async (req: Request, res: Response) => {
 
         if (!valid) {
           const message = 'Invalid verification link';
-          res.redirect(`/verified/error=true?message=${message}`);
+          res.redirect(`api/verified/error=true?message=${message}`);
         }
 
         User.findByIdAndUpdate(userId, { verified: true })
           .then(() => {
             UserVerification.deleteOne({ _id: userId })
               .then((_) => {
-                res.redirect('/verified');
+                res.sendFile('verified.html', { root: './public' });
               })
               .catch((err) => {
                 logger.error(`${err}`);
 
                 const message = 'Error verifying email';
-                res.redirect(`/verified/error=true?message=${message}`);
+                res.redirect(`api/verified/error=true?message=${message}`);
               });
           })
           .catch((error) => {
             logger.error(`${error}`);
 
             const message = 'Error verifying email';
-            res.redirect(`/verified/error=true?message=${message}`);
+            res.redirect(`api/verified/error=true?message=${message}`);
           });
       }
     })
@@ -469,7 +470,7 @@ export const verifyUser = async (req: Request, res: Response) => {
       logger.error(`${error}`);
 
       const message = 'Error verifying email';
-      res.redirect(`/verified/error=true?message=${message}`);
+      res.redirect(`../../verified/error=true?message=${message}`);
     });
 };
 
