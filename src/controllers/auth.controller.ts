@@ -23,6 +23,13 @@ export const authUser = async (req: Request, res: Response) => {
       });
     }
 
+    if (!user.verified) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Email is not verified',
+      });
+    }
+
     // Validate password
     const validPassword = bcrypt.compareSync(password, user.password);
 
@@ -67,6 +74,13 @@ export const renewToken = async (req: Request, res: Response) => {
     const token = await generateJWT(uid);
 
     const user = await User.findById(uid);
+
+    if (!(user?.verified ?? false)) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Email is not verified',
+      });
+    }
 
     res.json({
       success: true,
