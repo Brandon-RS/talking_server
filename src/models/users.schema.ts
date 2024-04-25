@@ -27,6 +27,11 @@ const UserSchema = new Schema({
     type: String,
     unique: true,
   },
+
+  verified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 UserSchema.methods.toJSON = function () {

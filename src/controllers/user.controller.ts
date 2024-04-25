@@ -1,15 +1,35 @@
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import fs from 'fs';
+import { createTransport } from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
 
 import cloudinary from '../helpers/cloudinary.helper';
-import { generateJWT } from '../helpers/jwt';
 import logger from '../helpers/logger.helper';
 import messageSchema from '../models/message.schema';
 import usersSchema from '../models/users.schema';
+import userVerificationSchema from '../models/userVerification.schema';
 
 const User = usersSchema;
 const Message = messageSchema;
+const UserVerification = userVerificationSchema;
+
+dotenv.config();
+
+let transporter = createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: true,
+  auth: {
+    user: process.env.AUTH_EMAIL,
+    pass: process.env.AUTH_PASSWORD,
+  },
+});
+
+transporter.verify((error) =>
+  error ? logger.error(`${error}`) : logger.info(`Email service is ready`)
+);
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -35,11 +55,12 @@ export const createUser = async (req: Request, res: Response) => {
 
     await user.save();
 
-    const token = await generateJWT(user.id);
+    // const token = await generateJWT(user.id);
+    sendVerificationEmail(user, res);
 
     res.json({
       user,
-      token,
+      // token,
     });
   } catch (error: any) {
     logger.error(`${error}`);
@@ -314,4 +335,64 @@ export const changeProfilePic = async (req: Request, res: Response) => {
       error,
     });
   }
+};
+
+// TODO(BRANDOM): Add interface for user, and send only required users parameters
+const sendVerificationEmail = (user: any, res: Response) => {
+  // const url = `${process.env.CLIENT_URL}/verify-email/${token}`;
+
+  logger.info(`Sending verification email to ${user.uid}`);
+
+  const uniqueString = uuidv4() + user.uid;
+  const url = `http://localhost:3000/verify-email/${user.uid}/${uniqueString}`;
+
+  const mailOptions = {
+    from: process.env.AUTH_EMAIL,
+    to: user.email,
+    subject: 'Verify your email',
+    html: `
+      <h1>Email Verification</h1>
+      <p>Click <a href="${url}">here</a> to verify your email</p>
+      <p><span>This link expires in 2 hours</span></p>
+    `,
+  };
+
+  const salt = bcrypt.genSaltSync();
+  const hash = bcrypt.hashSync(uniqueString, salt);
+
+  const userVerification = new UserVerification({
+    userId: user.uid,
+    uniqueString: hash,
+    createdAt: new Date(),
+    expiredAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+  });
+
+  userVerification
+    .save()
+    .then(() => {
+      transporter
+        .sendMail(mailOptions)
+        .then(() => {
+          res.json({
+            success: true,
+            msg: 'Verification email sent',
+          });
+        })
+        .catch((error) => {
+          logger.error(`${error}`);
+
+          return res.status(500).json({
+            success: false,
+            msg: 'Verification email failed to send',
+          });
+        });
+    })
+    .catch((error) => {
+      logger.error(`${error}`);
+
+      return res.status(500).json({
+        success: false,
+        msg: 'Email verification failed',
+      });
+    });
 };
