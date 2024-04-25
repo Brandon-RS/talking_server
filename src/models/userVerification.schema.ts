@@ -17,7 +17,7 @@ const UserVerificationSchema = new Schema({
     required: true,
   },
 
-  expiredAt: {
+  expiresAt: {
     type: Date,
     required: true,
   },

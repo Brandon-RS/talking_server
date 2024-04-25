@@ -12,6 +12,8 @@ import {
   getALlUsers,
   getUserChats,
   updateUser,
+  verifiedEmail,
+  verifyUser,
 } from '../controllers/user.controller';
 
 import { upload } from '../helpers/cloudinary.helper';
@@ -72,5 +74,9 @@ userRouter.put(
   [validateJWT, validateFields],
   changeProfilePic
 );
+
+userRouter.get('/verify-email/:id/:uniqueString', verifyUser);
+
+userRouter.get('/verified', verifiedEmail);
 
 export default userRouter;

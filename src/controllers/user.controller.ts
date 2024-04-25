@@ -397,3 +397,82 @@ const sendVerificationEmail = (user: any, res: Response) => {
       });
     });
 };
+
+export const verifyUser = async (req: Request, res: Response) => {
+  const { userId, uniqueString } = req.params;
+
+  logger.info(`GET: api/verify-email/${userId}/${uniqueString}`);
+
+  UserVerification.findOne({ userId })
+    .then((verification) => {
+      if (!verification) {
+        const message = 'Something went wrong verifying email';
+        res.redirect(`/verified/error=true?message=${message}`);
+      }
+
+      if (verification!.expiresAt < new Date()) {
+        userVerificationSchema
+          .deleteOne({ userId })
+          .then((_) => {
+            User.deleteOne({ _id: userId })
+              .then((_) => {
+                const message =
+                  'Verification link has expired. Please sign up again!';
+                res.redirect(`/verified/error=true?message=${message}`);
+              })
+              .catch((err) => {
+                logger.error(`${err}`);
+
+                const message = 'Error verifying email';
+                res.redirect(`/verified/error=true?message=${message}`);
+              });
+          })
+          .catch((err) => {
+            logger.error(`${err}`);
+
+            const message = 'Verification link expired';
+            res.redirect(`/verified/error=true?message=${message}`);
+          });
+      } else {
+        const valid = bcrypt.compareSync(
+          uniqueString,
+          verification!.uniqueString
+        );
+
+        if (!valid) {
+          const message = 'Invalid verification link';
+          res.redirect(`/verified/error=true?message=${message}`);
+        }
+
+        User.findByIdAndUpdate(userId, { verified: true })
+          .then(() => {
+            UserVerification.deleteOne({ _id: userId })
+              .then((_) => {
+                res.redirect('/verified');
+              })
+              .catch((err) => {
+                logger.error(`${err}`);
+
+                const message = 'Error verifying email';
+                res.redirect(`/verified/error=true?message=${message}`);
+              });
+          })
+          .catch((error) => {
+            logger.error(`${error}`);
+
+            const message = 'Error verifying email';
+            res.redirect(`/verified/error=true?message=${message}`);
+          });
+      }
+    })
+    .catch((error) => {
+      logger.error(`${error}`);
+
+      const message = 'Error verifying email';
+      res.redirect(`/verified/error=true?message=${message}`);
+    });
+};
+
+export const verifiedEmail = async (req: Request, res: Response) => {
+  res.sendFile('verified.html', { root: './public' });
+};
