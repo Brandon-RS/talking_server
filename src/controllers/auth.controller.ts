@@ -65,7 +65,7 @@ export const renewToken = async (req: Request, res: Response) => {
     if (!uid) {
       return res
         .status(400)
-        .json(getErrorResponse('Error renewing token, invalid user id'));
+        .json(getErrorResponse('Error renewing user token, invalid token'));
     }
 
     const user = await User.findById(uid);
@@ -81,6 +81,30 @@ export const renewToken = async (req: Request, res: Response) => {
     await handleAccessToken(uid, token);
 
     return res.json(getSuccessResponse({ user, token }));
+  } catch (error: any) {
+    logger.error(`GET: api/renew-token - ${error}`);
+
+    return res
+      .status(500)
+      .json(getErrorResponse('Error renewing token, please try again later'));
+  }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+  const { uid } = req.body;
+
+  logger.info(`POST: api/renew-token - ${uid}`);
+
+  try {
+    if (!uid) {
+      return res
+        .status(400)
+        .json(getErrorResponse('Error logging out user, invalid token'));
+    }
+
+    await Access.deleteMany({ userId: uid });
+
+    return res.json(getSuccessResponse('User logged out'));
   } catch (error: any) {
     logger.error(`GET: api/renew-token - ${error}`);
 

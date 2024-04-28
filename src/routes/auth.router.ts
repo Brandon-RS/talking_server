@@ -1,13 +1,17 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
 
-import { authUser, renewToken } from '../controllers/auth.controller';
+import {
+  authUser,
+  logoutUser,
+  renewToken,
+} from '../controllers/auth.controller';
 import validateFields from '../middlewares/validate_fields';
 import validateJWT from '../middlewares/validate_jwt';
 
 const authRouter = Router();
 
-authRouter.get('/renew-token', [validateJWT], renewToken);
+authRouter.get('/renew-token', validateJWT, renewToken);
 
 authRouter.post(
   '/auth',
@@ -18,5 +22,7 @@ authRouter.post(
   ],
   authUser
 );
+
+authRouter.post('/logout', validateJWT, logoutUser);
 
 export default authRouter;
