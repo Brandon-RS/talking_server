@@ -1,6 +1,16 @@
 import { Schema, model } from 'mongoose';
 
-const UserSchema = new Schema({
+export interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  online: boolean;
+  profileImage: string;
+  verified: boolean;
+  isPublic: boolean;
+}
+
+const UserSchema = new Schema<IUser>({
   name: {
     type: String,
     required: true,
@@ -29,6 +39,11 @@ const UserSchema = new Schema({
   },
 
   verified: {
+    type: Boolean,
+    default: false,
+  },
+
+  isPublic: {
     type: Boolean,
     default: false,
   },

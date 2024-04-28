@@ -1,6 +1,13 @@
 import { Schema, model } from 'mongoose';
 
-const UserVerificationSchema = new Schema({
+export interface IUserVerification {
+  userId: string;
+  uniqueString: string;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
+const UserVerificationSchema = new Schema<IUserVerification>({
   userId: {
     type: String,
     required: true,

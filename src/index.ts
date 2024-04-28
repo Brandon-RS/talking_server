@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import dbConnection from './database/config';
 import { initCloudinary } from './helpers/cloudinary.helper';
 import logger from './helpers/logger.helper';
+import { initMailService } from './helpers/mail.helper';
 import router from './routes/app.router';
 import authRouter from './routes/auth.router';
 import userRouter from './routes/user.router';
@@ -22,6 +23,7 @@ app.use(express.static(publicPath));
 app.use(express.json());
 
 initCloudinary();
+initMailService();
 
 // Routes
 app.use('/api', router);

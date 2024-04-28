@@ -2,34 +2,23 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 import fs from 'fs';
-import { createTransport } from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 
 import cloudinary from '../helpers/cloudinary.helper';
 import logger from '../helpers/logger.helper';
+import {
+  MailServiceError,
+  sendVerificationEmail,
+} from '../helpers/mail.helper';
 import messageSchema from '../models/message.schema';
-import usersSchema from '../models/users.schema';
 import userVerificationSchema from '../models/userVerification.schema';
+import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
 const Message = messageSchema;
 const UserVerification = userVerificationSchema;
 
 dotenv.config();
-
-let transporter = createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: true,
-  auth: {
-    user: process.env.AUTH_EMAIL,
-    pass: process.env.AUTH_PASSWORD,
-  },
-});
-
-transporter.verify((error) =>
-  error ? logger.error(`${error}`) : logger.info(`Email service is ready`)
-);
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -39,36 +28,46 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const existsEmail = await User.findOne({ email });
 
-    // Check if email exists
     if (existsEmail) {
       return res.status(400).json({
         success: false,
-        msg: 'Email already exists',
+        msg: 'Email already in use',
       });
     }
 
     const user = new User(req.body);
+    user.password = bcrypt.hashSync(password, bcrypt.genSaltSync());
 
-    // Encrypt password
-    const salt = bcrypt.genSaltSync();
-    user.password = bcrypt.hashSync(password, salt);
+    const uniqueString = uuidv4() + user._id;
+    const userVerification = new UserVerification({
+      userId: user._id,
+      uniqueString: bcrypt.hashSync(uniqueString, bcrypt.genSaltSync()),
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+    });
 
-    await user.save();
+    const url = `${process.env.HOST_URL}/api/verify-email/${user._id}/${uniqueString}`;
+    await sendVerificationEmail(user.email, url);
 
-    sendVerificationEmail(user, res);
+    await Promise.all([user.save(), userVerification.save()]);
 
-    // const token = await generateJWT(user.id);
-
-    // res.json({
-    //   user,
-    //   token,
-    // });
+    res.json({
+      success: true,
+      user,
+    });
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
+    if (error instanceof MailServiceError) {
+      return res.status(400).json({
+        success: false,
+        msg: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      msg: 'Error creating user',
+      msg: error.message ?? 'Error creating user',
     });
   }
 };
@@ -336,64 +335,6 @@ export const changeProfilePic = async (req: Request, res: Response) => {
       error,
     });
   }
-};
-
-// TODO(BRANDOM): Add interface for user, and send only required users parameters
-const sendVerificationEmail = (user: any, res: Response) => {
-  logger.info(`Sending verification email to ${user._id}`);
-
-  const uniqueString = uuidv4() + user._id;
-  const url = `${process.env.HOST_URL}/api/verify-email/${user._id}/${uniqueString}`;
-
-  const mailOptions = {
-    from: process.env.AUTH_EMAIL,
-    to: user.email,
-    subject: 'Verify your email',
-    html: `
-      <h1>Email Verification</h1>
-      <p>Click <a href="${url}">here</a> to verify your email</p>
-      <p><span>This link expires in 2 hours</span></p>
-    `,
-  };
-
-  const salt = bcrypt.genSaltSync();
-  const hash = bcrypt.hashSync(uniqueString, salt);
-
-  const userVerification = new UserVerification({
-    userId: user._id,
-    uniqueString: hash,
-    createdAt: new Date(),
-    expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-  });
-
-  userVerification
-    .save()
-    .then(() => {
-      transporter
-        .sendMail(mailOptions)
-        .then(() => {
-          res.json({
-            success: true,
-            msg: 'Verification email sent',
-          });
-        })
-        .catch((error) => {
-          logger.error(`${error}`);
-
-          return res.status(500).json({
-            success: false,
-            msg: 'Verification email failed to send',
-          });
-        });
-    })
-    .catch((error) => {
-      logger.error(`${error}`);
-
-      return res.status(500).json({
-        success: false,
-        msg: 'Email verification failed',
-      });
-    });
 };
 
 export const verifyUser = async (req: Request, res: Response) => {
