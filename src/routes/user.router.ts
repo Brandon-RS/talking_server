@@ -9,7 +9,7 @@ import {
   changeProfilePic,
   createUser,
   deleteUser,
-  getALlUsers,
+  getAllPublicUsers,
   getUserChats,
   updateUser,
   verifyUser,
@@ -33,7 +33,7 @@ userRouter.post(
   createUser
 );
 
-userRouter.get('/users', validateJWT, getALlUsers);
+userRouter.get('/users', validateJWT, getAllPublicUsers);
 
 userRouter.get('/users/chats/:to', validateJWT, getUserChats);
 

@@ -66,18 +66,20 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getALlUsers = async (req: Request, res: Response) => {
+export const getAllPublicUsers = async (req: Request, res: Response) => {
   const { limit = 10, from = 0 } = req.query;
 
   logger.info('GET: api/users');
 
   try {
+    const query = { _id: { $ne: req.body.uid }, isPublic: true };
+
     const [users, total] = await Promise.all([
-      User.find({ _id: { $ne: req.body.uid } })
+      User.find(query)
         .sort({ online: -1 })
         .skip(Number(from))
         .limit(Number(limit)),
-      User.countDocuments({ _id: { $ne: req.body.uid } }),
+      User.countDocuments(query),
     ]);
 
     return res.json(getSuccessResponse({ users, total }));
