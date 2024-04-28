@@ -80,11 +80,11 @@ export const getALlUsers = async (req: Request, res: Response) => {
       User.countDocuments({ _id: { $ne: req.body.uid } }),
     ]);
 
-    res.json(getSuccessResponse({ users, total }));
+    return res.json(getSuccessResponse({ users, total }));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json(getErrorResponse('Error getting users'));
+    return res.status(500).json(getErrorResponse('Error getting users'));
   }
 };
 
@@ -312,78 +312,50 @@ export const changeProfilePic = async (req: Request, res: Response) => {
 
 export const verifyUser = async (req: Request, res: Response) => {
   const { userId, uniqueString } = req.params;
-  const webUrl = process.env.WEB_URL;
-  const url = `${webUrl}/verified`;
+  const url = `${process.env.WEB_URL}/verified`;
 
   logger.info(`GET: api/verify-email/${userId}/${uniqueString}`);
 
-  UserVerification.findOne({ userId })
-    .then((verification) => {
-      if (!verification) {
-        logger.error(`${verification}`);
-        const message = 'Something went wrong verifying email';
-        res.redirect(`${url}?error=true&message=${message}`);
-      }
+  try {
+    const userVerification = await UserVerification.findOne({ userId });
 
-      if (verification!.expiresAt < new Date()) {
-        userVerificationSchema
-          .deleteOne({ userId })
-          .then((_) => {
-            User.deleteOne({ _id: userId })
-              .then((_) => {
-                const message =
-                  'Verification link has expired. Please sign up again!';
-                res.redirect(`${url}?error=true&message=${message}`);
-              })
-              .catch((err) => {
-                logger.error(`${err}`);
+    if (!userVerification) {
+      logger.error(`No verification found for user ${userId}`);
+      const message = 'Something went wrong verifying email';
+      return res.redirect(`${url}?error=true&message=${message}`);
+    }
 
-                const message = 'Error verifying email';
-                res.redirect(`${url}?error=true&message=${message}`);
-              });
-          })
-          .catch((err) => {
-            logger.error(`${err}`);
+    if (userVerification.expiresAt < new Date()) {
+      await Promise.all([
+        UserVerification.deleteOne({ userId }),
+        User.deleteOne({ _id: userId }),
+      ]);
 
-            const message = 'Verification link expired';
-            res.redirect(`${url}?error=true&message=${message}`);
-          });
-      } else {
-        const valid = bcrypt.compareSync(
-          uniqueString,
-          verification!.uniqueString
-        );
+      const message = 'Verification link has expired. Please sign up again!';
+      return res.redirect(`${url}?error=true&message=${message}`);
+    }
 
-        if (!valid) {
-          const message = 'Invalid verification link';
-          res.redirect(`${url}?error=true&message=${message}`);
-        }
+    const valid = bcrypt.compareSync(
+      uniqueString,
+      userVerification.uniqueString
+    );
 
-        User.findByIdAndUpdate(userId, { verified: true })
-          .then(() => {
-            UserVerification.deleteOne({ _id: userId })
-              .then((_) => {
-                res.redirect(`${url}`);
-              })
-              .catch((err) => {
-                logger.error(`${err}`);
+    if (!valid) {
+      const message = 'Invalid verification link';
+      return res.redirect(`${url}?error=true&message=${message}`);
+    }
 
-                const message = 'Error verifying email';
-                res.redirect(`${url}?error=true&message=${message}`);
-              });
-          })
-          .catch((error) => {
-            logger.error(`${error}`);
+    await Promise.all([
+      User.findByIdAndUpdate(userId, { verified: true }),
+      UserVerification.findByIdAndDelete(userVerification._id),
+    ]);
 
-            const message = 'Error verifying email';
-            res.redirect(`${url}?error=true&message=${message}`);
-          });
-      }
-    })
-    .catch((error) => {
-      logger.error(`${error}`);
+    const message = 'Email verified successfully';
+    return res.redirect(`${url}?message=${message}`);
+  } catch (error) {
+    logger.error(`${error}`);
 
-      const message = 'Error verifying email';
-      res.redirect(`${url}?error=true&message=${message}`);
-    });
+    const message = 'Error verifying email';
+    return res.redirect(`${url}?error=true&message=${message}`);
+  }
 };
