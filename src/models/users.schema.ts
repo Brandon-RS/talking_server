@@ -35,7 +35,6 @@ const UserSchema = new Schema<IUser>({
 
   profileImage: {
     type: String,
-    unique: true,
   },
 
   verified: {

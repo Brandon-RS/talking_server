@@ -10,6 +10,10 @@ import {
   MailServiceError,
   sendVerificationEmail,
 } from '../helpers/mail.helper';
+import {
+  getErrorResponse,
+  getSuccessResponse,
+} from '../helpers/response.helper';
 import messageSchema from '../models/message.schema';
 import userVerificationSchema from '../models/userVerification.schema';
 import usersSchema from '../models/users.schema';
@@ -29,10 +33,7 @@ export const createUser = async (req: Request, res: Response) => {
     const existsEmail = await User.findOne({ email });
 
     if (existsEmail) {
-      return res.status(400).json({
-        success: false,
-        msg: 'Email already in use',
-      });
+      return res.status(400).json(getErrorResponse('Email already in use'));
     }
 
     const user = new User(req.body);
@@ -51,24 +52,17 @@ export const createUser = async (req: Request, res: Response) => {
 
     await Promise.all([user.save(), userVerification.save()]);
 
-    res.json({
-      success: true,
-      user,
-    });
+    return res.json(getSuccessResponse(user));
   } catch (error: any) {
     logger.error(`${error}`);
 
     if (error instanceof MailServiceError) {
-      return res.status(400).json({
-        success: false,
-        msg: error.message,
-      });
+      return res.status(400).json(getErrorResponse(error.message));
     }
 
-    return res.status(500).json({
-      success: false,
-      msg: error.message ?? 'Error creating user',
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse(error.message ?? 'Error creating user'));
   }
 };
 
@@ -78,19 +72,19 @@ export const getALlUsers = async (req: Request, res: Response) => {
   logger.info('GET: api/users');
 
   try {
-    const users = await User.find({ _id: { $ne: req.body.uid } })
-      .sort({ online: -1 })
-      .skip(Number(from))
-      .limit(Number(limit));
+    const [users, total] = await Promise.all([
+      User.find({ _id: { $ne: req.body.uid } })
+        .sort({ online: -1 })
+        .skip(Number(from))
+        .limit(Number(limit)),
+      User.countDocuments({ _id: { $ne: req.body.uid } }),
+    ]);
 
-    res.json(users);
+    res.json(getSuccessResponse({ users, total }));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error getting users',
-    });
+    res.status(500).json(getErrorResponse('Error getting users'));
   }
 };
 
@@ -102,10 +96,9 @@ export const updateUser = async (req: Request, res: Response) => {
 
   try {
     if (requestOwner !== uid) {
-      return res.status(400).json({
-        success: false,
-        msg: "You can't update this account",
-      });
+      return res
+        .status(400)
+        .json(getErrorResponse("You can't update this user's information"));
     }
 
     const { name, email } = req.body;
@@ -116,10 +109,7 @@ export const updateUser = async (req: Request, res: Response) => {
     });
 
     if (emailExists) {
-      return res.status(400).json({
-        success: false,
-        msg: 'Email already in use',
-      });
+      return res.status(400).json(getErrorResponse('Email already in use'));
     }
 
     const user = await User.findByIdAndUpdate(
@@ -129,20 +119,16 @@ export const updateUser = async (req: Request, res: Response) => {
     );
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: 'User not found',
-      });
+      return res.status(404).json(getErrorResponse('User not found'));
     }
 
-    res.json(user);
+    return res.json(getSuccessResponse(user));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error updating user',
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse('Error updating user information'));
   }
 };
 
@@ -162,14 +148,13 @@ export const getUserChats = async (req: Request, res: Response) => {
       .sort({ createdAt: 'desc' })
       .limit(30);
 
-    res.json(messages);
+    return res.json(getSuccessResponse(messages));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error getting messages',
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse('Error getting user messages'));
   }
 };
 
@@ -181,29 +166,26 @@ export const deleteUser = async (req: Request, res: Response) => {
 
   try {
     if (requestOwner !== uid) {
-      return res.status(400).json({
-        success: false,
-        msg: "You can't delete this account",
-      });
+      return res
+        .status(400)
+        .json(getErrorResponse("You can't delete this user's information"));
     }
 
     const user = await User.findByIdAndDelete(uid);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: 'User not found',
-      });
+      return res
+        .status(404)
+        .json(getErrorResponse('User not found or already deleted'));
     }
 
-    res.json(user);
+    return res.json(getSuccessResponse(user));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error deleting user',
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse('Error deleting user information'));
   }
 };
 
@@ -216,29 +198,26 @@ export const changePassword = async (req: Request, res: Response) => {
 
   try {
     if (requestOwner !== uid) {
-      return res.status(400).json({
-        success: false,
-        msg: "You can't change this user`s password",
-      });
+      return res
+        .status(400)
+        .json(getErrorResponse("You can't change this user`s password"));
     }
 
     const user = await User.findById(uid);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: 'User not found',
-      });
+      return res
+        .status(404)
+        .json(getErrorResponse('User not found or already deleted'));
     }
 
     // Check current password
     const validPassword = bcrypt.compareSync(current_password, user.password);
 
     if (!validPassword) {
-      return res.status(400).json({
-        success: false,
-        msg: 'Current password is incorrect',
-      });
+      return res
+        .status(400)
+        .json(getErrorResponse('Current password is not correct'));
     }
 
     // Encrypt password
@@ -247,14 +226,13 @@ export const changePassword = async (req: Request, res: Response) => {
 
     await user.save();
 
-    res.json(user);
+    return res.json(getSuccessResponse(user));
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error changing password',
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse('Error changing user password'));
   }
 };
 
@@ -266,23 +244,21 @@ export const changeProfilePic = async (req: Request, res: Response) => {
 
   try {
     if (requestOwner !== uid) {
-      return res.status(400).json({
-        success: false,
-        msg: "You can't change this user`s profile picture",
-      });
+      return res
+        .status(400)
+        .json(getErrorResponse("You can't change this user`s profile picture"));
     }
 
     const user = await User.findById(uid);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: 'User not found',
-      });
+      return res.status(404).json(getErrorResponse('User not found'));
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res
+        .status(400)
+        .json(getErrorResponse('Please upload a profile picture'));
     }
 
     if (user.profileImage) {
@@ -308,32 +284,29 @@ export const changeProfilePic = async (req: Request, res: Response) => {
         fs.unlinkSync(req.file!.path ?? '');
 
         if (error) {
-          return res.status(500).json({
-            success: false,
-            error,
-          });
+          return res
+            .status(500)
+            .json(
+              getErrorResponse(
+                error.message ?? 'Error changing profile picture'
+              )
+            );
         }
 
         if (result) {
           user.profileImage = result.secure_url;
           await user.save();
 
-          return res.json({
-            success: true,
-            user,
-            result,
-          });
+          return res.json(getSuccessResponse({ user, result }));
         }
       }
     );
   } catch (error: any) {
     logger.error(`${error}`);
 
-    res.status(500).json({
-      success: false,
-      msg: 'Error changing profile picture',
-      error,
-    });
+    return res
+      .status(500)
+      .json(getErrorResponse('Error changing user profile picture'));
   }
 };
 
