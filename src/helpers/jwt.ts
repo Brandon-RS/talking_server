@@ -8,7 +8,7 @@ export const generateJWT = (uid: String) => {
   }
 
   return new Promise((resolve, reject) => {
-    sign({ uid }, secret, { expiresIn: '24h' }, (err, token) => {
+    sign({ uid }, secret, { expiresIn: '72h' }, (err, token) => {
       err ? reject('Could not generate token') : resolve(token);
     });
   });

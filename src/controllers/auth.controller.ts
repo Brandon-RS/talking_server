@@ -7,9 +7,11 @@ import {
   getErrorResponse,
   getSuccessResponse,
 } from '../helpers/response.helper';
+import accessSchema from '../models/access.schema';
 import usersSchema from '../models/users.schema';
 
 const User = usersSchema;
+const Access = accessSchema;
 
 export const authUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -44,6 +46,8 @@ export const authUser = async (req: Request, res: Response) => {
     // Generate JWT
     const token = await generateJWT(user.id);
 
+    await handleAccessToken(user._id.toString(), token);
+
     return res.json(getSuccessResponse({ user, token }));
   } catch (error: any) {
     logger.error(`POST: api/auth - ${email} - ${error}`);
@@ -64,8 +68,6 @@ export const renewToken = async (req: Request, res: Response) => {
         .json(getErrorResponse('Error renewing token, invalid user id'));
     }
 
-    const token = await generateJWT(uid);
-
     const user = await User.findById(uid);
 
     if (!(user?.verified ?? false)) {
@@ -73,6 +75,10 @@ export const renewToken = async (req: Request, res: Response) => {
         .status(400)
         .json(getErrorResponse('Please verify your account first'));
     }
+
+    const token = await generateJWT(uid);
+
+    await handleAccessToken(uid, token);
 
     return res.json(getSuccessResponse({ user, token }));
   } catch (error: any) {
@@ -82,4 +88,14 @@ export const renewToken = async (req: Request, res: Response) => {
       .status(500)
       .json(getErrorResponse('Error renewing token, please try again later'));
   }
+};
+
+const handleAccessToken = async (uid: string, token: any) => {
+  const currentToken = await Access.findOne({ userId: uid });
+
+  if (currentToken) {
+    await Access.findByIdAndDelete(currentToken.id);
+  }
+
+  await Access.create({ userId: uid, token });
 };
