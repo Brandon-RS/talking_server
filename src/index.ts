@@ -35,5 +35,5 @@ const io = new Server(server);
 socketController(io);
 
 server.listen(port, () => {
-  logger.info(`Server is running at http://localhost:${port}`);
+  logger.info(`Server is running at ${process.env.HOST_URL}`);
 });
