@@ -82,7 +82,14 @@ export const getAllPublicUsers = async (req: Request, res: Response) => {
       User.countDocuments(query),
     ]);
 
-    return res.json(getSuccessResponse({ items: users, total }));
+    return res.json(
+      getSuccessResponse({
+        items: users,
+        totalPages: Math.ceil(total / Number(limit)),
+        numberOfElements: users.length,
+        totalItems: total,
+      })
+    );
   } catch (error: any) {
     logger.error(`${error}`);
 
